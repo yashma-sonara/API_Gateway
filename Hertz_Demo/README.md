@@ -10,3 +10,8 @@ This is the Hertz server of the API Gateway. When a request is made to the serve
 * `go build -o Hertz_Demo`
 
 * `go run main.go`
+
+## how to send request to server
+* `curl -X GET http://localhost:8080/[serviceName]/[method] -d '[{"userID":"id"}]' -H "Content-Type: application/json"`
+
+Modify content in [] according to service running
