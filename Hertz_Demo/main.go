@@ -13,9 +13,10 @@ import (
 
 func decode(c context.Context, ctx *app.RequestContext) {
 	if string(ctx.ContentType()) != "application/json" {
-		log.Println("Invalid Content-Type:", ctx.ContentType(), "Expected Content-Type: application/json")
+		log.Println("Invalid Content-Type:", ctx.ContentType())
 		ctx.SetStatusCode(http.StatusBadRequest)
-		ctx.WriteString("Invalid Content-Type")
+		ctx.WriteString("Invalid Content-Type, expected application/json")
+		return
 	}
 	
 	path := ctx.Request.Path()
@@ -39,7 +40,7 @@ func main() {
 		server.WithHostPorts("127.0.0.1:8080"),
 	)
 
-	hz.GET("/", decode)
+	hz.NoRoute(decode)
 
 	hz.Spin()
 }
