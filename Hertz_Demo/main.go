@@ -12,6 +12,12 @@ import (
 )
 
 func decode(c context.Context, ctx *app.RequestContext) {
+	if string(ctx.ContentType()) != "application/json" {
+		log.Println("Invalid Content-Type:", ctx.ContentType(), "Expected Content-Type: application/json")
+		ctx.SetStatusCode(http.StatusBadRequest)
+		ctx.WriteString("Invalid Content-Type")
+	}
+	
 	path := ctx.Request.Path()
 	pathStr := string(path)
 	splitArr := strings.Split(pathStr, "/")
