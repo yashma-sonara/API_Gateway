@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -28,11 +29,30 @@ func decode(c context.Context, ctx *app.RequestContext) {
 		ctx.WriteString("Invalid URL path")
 		return
 	}
+	
+	body, err := ctx.Body()
+	if err != nil {
+		log.Println("Error reading request body:", err)
+		ctx.SetStatusCode(http.StatusInternalServerError)
+		ctx.WriteString("Internal Server Error")
+		return
+	}
+	
+	var jsonMap map[string]interface{}
+	err2 := json.Unmarshal(body, &jsonMap)
+	if err2 != nil {
+		log.Println("Error parsing JSON:", err2)
+		ctx.SetStatusCode(http.StatusBadRequest)
+		ctx.WriteString("Invalid JSON data")
+		return
+	}
 
 	serviceName := splitArr[1]
 	method := splitArr[2]
 	directMethod := ctx.Request.Method()
+	
 	fmt.Println("Service name: ", serviceName, "Method", method, "/", directMethod)
+	fmt.Println(jsonMap)
 }
 
 func main() {
@@ -40,7 +60,9 @@ func main() {
 		server.WithHostPorts("127.0.0.1:8080"),
 	)
 
+	hz.Any("/", decode)
 	hz.NoRoute(decode)
+	hz.NoMethod(decode)
 
 	hz.Spin()
 }
