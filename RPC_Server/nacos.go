@@ -33,24 +33,8 @@ func registerOnNacos(serviceName string, port int) error {
 		return err
 	}
 
-	// register
-	// success, err := namingClient.RegisterInstance(vo.RegisterInstanceParam{
-	// 	Ip:          "127.0.0.1",
-	// 	Port:        uint64(port),
-	// 	ServiceName: serviceName,
-	// 	Weight:      10,
-	// 	Enable:      true,
-	// 	Healthy:     true,
-	// })
-
-	// if !success || err != nil {
-	// 	return fmt.Errorf("RegisterServiceInstance failed!" + err.Error())
-	// }
-
-	// batch register
 	instanceCount := 3
 
-	// Create an instance list for batch registration
 	instances := make([]vo.RegisterInstanceParam, instanceCount)
 	for i := 0; i < instanceCount; i++ {
 		instances[i] = vo.RegisterInstanceParam{
@@ -72,29 +56,6 @@ func registerOnNacos(serviceName string, port int) error {
 	if !success || err != nil {
 		return fmt.Errorf("BatchRegisterServiceInstance failed!" + err.Error())
 	}
-
-	// check instance count
-	// time.Sleep(5 * time.Second)
-
-	// service, err := namingClient.GetService(vo.GetServiceParam{
-	// 	ServiceName: serviceName,
-	// 	Clusters:    []string{},
-	// })
-	// if err != nil {
-	// 	return fmt.Errorf("Failed to get service: %s", err.Error())
-	// }
-
-	// // Print the instance count
-	// fmt.Println("Instance count:", len(service.Hosts))
-
-	// Deregister
-	// for i := 0; i < 3; i++ {
-	// 	namingClient.DeregisterInstance(vo.DeregisterInstanceParam{
-	// 		Ip:          "127.0.0.1",
-	// 		Port:        uint64(port + i),
-	// 		ServiceName: serviceName,
-	// 	})
-	// }
 
 	return nil
 }
