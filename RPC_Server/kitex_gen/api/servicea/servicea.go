@@ -20,7 +20,7 @@ func NewServiceInfo() *kitex.ServiceInfo {
 	handlerType := (*api.ServiceA)(nil)
 	methods := map[string]kitex.MethodInfo{
 		"methodA": kitex.NewMethodInfo(methodAHandler, newServiceAMethodAArgs, newServiceAMethodAResult, false),
-		"methodB": kitex.NewMethodInfo(methodBHandler, newServiceAMethodBArgs, nil, true),
+		"methodB": kitex.NewMethodInfo(methodBHandler, newServiceAMethodBArgs, newServiceAMethodBResult, false),
 		"methodC": kitex.NewMethodInfo(methodCHandler, newServiceAMethodCArgs, newServiceAMethodCResult, false),
 	}
 	extra := map[string]interface{}{
@@ -38,8 +38,9 @@ func NewServiceInfo() *kitex.ServiceInfo {
 }
 
 func methodAHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*api.ServiceAMethodAArgs)
 
-	err := handler.(api.ServiceA).MethodA(ctx)
+	err := handler.(api.ServiceA).MethodA(ctx, realArg.Req)
 	if err != nil {
 		return err
 	}
@@ -55,8 +56,9 @@ func newServiceAMethodAResult() interface{} {
 }
 
 func methodBHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*api.ServiceAMethodBArgs)
 
-	err := handler.(api.ServiceA).MethodB(ctx)
+	err := handler.(api.ServiceA).MethodB(ctx, realArg.Req)
 	if err != nil {
 		return err
 	}
@@ -67,9 +69,14 @@ func newServiceAMethodBArgs() interface{} {
 	return api.NewServiceAMethodBArgs()
 }
 
-func methodCHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+func newServiceAMethodBResult() interface{} {
+	return api.NewServiceAMethodBResult()
+}
 
-	err := handler.(api.ServiceA).MethodC(ctx)
+func methodCHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*api.ServiceAMethodCArgs)
+
+	err := handler.(api.ServiceA).MethodC(ctx, realArg.Req)
 	if err != nil {
 		return err
 	}
@@ -94,8 +101,9 @@ func newServiceClient(c client.Client) *kClient {
 	}
 }
 
-func (p *kClient) MethodA(ctx context.Context) (err error) {
+func (p *kClient) MethodA(ctx context.Context, req *api.Request) (err error) {
 	var _args api.ServiceAMethodAArgs
+	_args.Req = req
 	var _result api.ServiceAMethodAResult
 	if err = p.c.Call(ctx, "methodA", &_args, &_result); err != nil {
 		return
@@ -103,16 +111,19 @@ func (p *kClient) MethodA(ctx context.Context) (err error) {
 	return nil
 }
 
-func (p *kClient) MethodB(ctx context.Context) (err error) {
+func (p *kClient) MethodB(ctx context.Context, req *api.Request) (err error) {
 	var _args api.ServiceAMethodBArgs
-	if err = p.c.Call(ctx, "methodB", &_args, nil); err != nil {
+	_args.Req = req
+	var _result api.ServiceAMethodBResult
+	if err = p.c.Call(ctx, "methodB", &_args, &_result); err != nil {
 		return
 	}
 	return nil
 }
 
-func (p *kClient) MethodC(ctx context.Context) (err error) {
+func (p *kClient) MethodC(ctx context.Context, req *api.Request) (err error) {
 	var _args api.ServiceAMethodCArgs
+	_args.Req = req
 	var _result api.ServiceAMethodCResult
 	if err = p.c.Call(ctx, "methodC", &_args, &_result); err != nil {
 		return

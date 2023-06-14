@@ -3,6 +3,7 @@
 package servicea
 
 import (
+	api "RPC_Server/kitex_gen/api"
 	"context"
 	client "github.com/cloudwego/kitex/client"
 	callopt "github.com/cloudwego/kitex/client/callopt"
@@ -10,9 +11,9 @@ import (
 
 // Client is designed to provide IDL-compatible methods with call-option parameter for kitex framework.
 type Client interface {
-	MethodA(ctx context.Context, callOptions ...callopt.Option) (err error)
-	MethodB(ctx context.Context, callOptions ...callopt.Option) (err error)
-	MethodC(ctx context.Context, callOptions ...callopt.Option) (err error)
+	MethodA(ctx context.Context, req *api.Request, callOptions ...callopt.Option) (err error)
+	MethodB(ctx context.Context, req *api.Request, callOptions ...callopt.Option) (err error)
+	MethodC(ctx context.Context, req *api.Request, callOptions ...callopt.Option) (err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -44,17 +45,17 @@ type kServiceAClient struct {
 	*kClient
 }
 
-func (p *kServiceAClient) MethodA(ctx context.Context, callOptions ...callopt.Option) (err error) {
+func (p *kServiceAClient) MethodA(ctx context.Context, req *api.Request, callOptions ...callopt.Option) (err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.MethodA(ctx)
+	return p.kClient.MethodA(ctx, req)
 }
 
-func (p *kServiceAClient) MethodB(ctx context.Context, callOptions ...callopt.Option) (err error) {
+func (p *kServiceAClient) MethodB(ctx context.Context, req *api.Request, callOptions ...callopt.Option) (err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.MethodB(ctx)
+	return p.kClient.MethodB(ctx, req)
 }
 
-func (p *kServiceAClient) MethodC(ctx context.Context, callOptions ...callopt.Option) (err error) {
+func (p *kServiceAClient) MethodC(ctx context.Context, req *api.Request, callOptions ...callopt.Option) (err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.MethodC(ctx)
+	return p.kClient.MethodC(ctx, req)
 }
