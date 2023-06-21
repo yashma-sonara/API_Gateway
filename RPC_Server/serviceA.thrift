@@ -5,8 +5,12 @@ struct Request {
     2: string message
 }
 
+struct Response {
+    1: string message
+}
+
 service serviceA {
-    void methodA(1: Request req),
-    void methodB(1: Request req),
-    void methodC(1: Request req)
+    Response methodA(1: Request req),
+    Response methodB(1: Request req),
+    Response methodC(1: Request req)
 }

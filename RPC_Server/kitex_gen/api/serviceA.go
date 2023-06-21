@@ -232,12 +232,176 @@ func (p *Request) Field2DeepEqual(src string) bool {
 	return true
 }
 
+type Response struct {
+	Message string `thrift:"message,1" frugal:"1,default,string" json:"message"`
+}
+
+func NewResponse() *Response {
+	return &Response{}
+}
+
+func (p *Response) InitDefault() {
+	*p = Response{}
+}
+
+func (p *Response) GetMessage() (v string) {
+	return p.Message
+}
+func (p *Response) SetMessage(val string) {
+	p.Message = val
+}
+
+var fieldIDToName_Response = map[int16]string{
+	1: "message",
+}
+
+func (p *Response) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 1:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField1(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_Response[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+}
+
+func (p *Response) ReadField1(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		p.Message = v
+	}
+	return nil
+}
+
+func (p *Response) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("Response"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField1(oprot); err != nil {
+			fieldId = 1
+			goto WriteFieldError
+		}
+
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *Response) writeField1(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("message", thrift.STRING, 1); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Message); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
+}
+
+func (p *Response) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("Response(%+v)", *p)
+}
+
+func (p *Response) DeepEqual(ano *Response) bool {
+	if p == ano {
+		return true
+	} else if p == nil || ano == nil {
+		return false
+	}
+	if !p.Field1DeepEqual(ano.Message) {
+		return false
+	}
+	return true
+}
+
+func (p *Response) Field1DeepEqual(src string) bool {
+
+	if strings.Compare(p.Message, src) != 0 {
+		return false
+	}
+	return true
+}
+
 type ServiceA interface {
-	MethodA(ctx context.Context, req *Request) (err error)
+	MethodA(ctx context.Context, req *Request) (r *Response, err error)
 
-	MethodB(ctx context.Context, req *Request) (err error)
+	MethodB(ctx context.Context, req *Request) (r *Response, err error)
 
-	MethodC(ctx context.Context, req *Request) (err error)
+	MethodC(ctx context.Context, req *Request) (r *Response, err error)
 }
 
 type ServiceAClient struct {
@@ -266,32 +430,32 @@ func (p *ServiceAClient) Client_() thrift.TClient {
 	return p.c
 }
 
-func (p *ServiceAClient) MethodA(ctx context.Context, req *Request) (err error) {
+func (p *ServiceAClient) MethodA(ctx context.Context, req *Request) (r *Response, err error) {
 	var _args ServiceAMethodAArgs
 	_args.Req = req
 	var _result ServiceAMethodAResult
 	if err = p.Client_().Call(ctx, "methodA", &_args, &_result); err != nil {
 		return
 	}
-	return nil
+	return _result.GetSuccess(), nil
 }
-func (p *ServiceAClient) MethodB(ctx context.Context, req *Request) (err error) {
+func (p *ServiceAClient) MethodB(ctx context.Context, req *Request) (r *Response, err error) {
 	var _args ServiceAMethodBArgs
 	_args.Req = req
 	var _result ServiceAMethodBResult
 	if err = p.Client_().Call(ctx, "methodB", &_args, &_result); err != nil {
 		return
 	}
-	return nil
+	return _result.GetSuccess(), nil
 }
-func (p *ServiceAClient) MethodC(ctx context.Context, req *Request) (err error) {
+func (p *ServiceAClient) MethodC(ctx context.Context, req *Request) (r *Response, err error) {
 	var _args ServiceAMethodCArgs
 	_args.Req = req
 	var _result ServiceAMethodCResult
 	if err = p.Client_().Call(ctx, "methodC", &_args, &_result); err != nil {
 		return
 	}
-	return nil
+	return _result.GetSuccess(), nil
 }
 
 type ServiceAProcessor struct {
@@ -356,13 +520,16 @@ func (p *serviceAProcessorMethodA) Process(ctx context.Context, seqId int32, ipr
 	iprot.ReadMessageEnd()
 	var err2 error
 	result := ServiceAMethodAResult{}
-	if err2 = p.handler.MethodA(ctx, args.Req); err2 != nil {
+	var retval *Response
+	if retval, err2 = p.handler.MethodA(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing methodA: "+err2.Error())
 		oprot.WriteMessageBegin("methodA", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
 		oprot.WriteMessageEnd()
 		oprot.Flush(ctx)
 		return true, err2
+	} else {
+		result.Success = retval
 	}
 	if err2 = oprot.WriteMessageBegin("methodA", thrift.REPLY, seqId); err2 != nil {
 		err = err2
@@ -401,13 +568,16 @@ func (p *serviceAProcessorMethodB) Process(ctx context.Context, seqId int32, ipr
 	iprot.ReadMessageEnd()
 	var err2 error
 	result := ServiceAMethodBResult{}
-	if err2 = p.handler.MethodB(ctx, args.Req); err2 != nil {
+	var retval *Response
+	if retval, err2 = p.handler.MethodB(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing methodB: "+err2.Error())
 		oprot.WriteMessageBegin("methodB", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
 		oprot.WriteMessageEnd()
 		oprot.Flush(ctx)
 		return true, err2
+	} else {
+		result.Success = retval
 	}
 	if err2 = oprot.WriteMessageBegin("methodB", thrift.REPLY, seqId); err2 != nil {
 		err = err2
@@ -446,13 +616,16 @@ func (p *serviceAProcessorMethodC) Process(ctx context.Context, seqId int32, ipr
 	iprot.ReadMessageEnd()
 	var err2 error
 	result := ServiceAMethodCResult{}
-	if err2 = p.handler.MethodC(ctx, args.Req); err2 != nil {
+	var retval *Response
+	if retval, err2 = p.handler.MethodC(ctx, args.Req); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing methodC: "+err2.Error())
 		oprot.WriteMessageBegin("methodC", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
 		oprot.WriteMessageEnd()
 		oprot.Flush(ctx)
 		return true, err2
+	} else {
+		result.Success = retval
 	}
 	if err2 = oprot.WriteMessageBegin("methodC", thrift.REPLY, seqId); err2 != nil {
 		err = err2
@@ -645,6 +818,7 @@ func (p *ServiceAMethodAArgs) Field1DeepEqual(src *Request) bool {
 }
 
 type ServiceAMethodAResult struct {
+	Success *Response `thrift:"success,0,optional" frugal:"0,optional,Response" json:"success,omitempty"`
 }
 
 func NewServiceAMethodAResult() *ServiceAMethodAResult {
@@ -655,7 +829,25 @@ func (p *ServiceAMethodAResult) InitDefault() {
 	*p = ServiceAMethodAResult{}
 }
 
-var fieldIDToName_ServiceAMethodAResult = map[int16]string{}
+var ServiceAMethodAResult_Success_DEFAULT *Response
+
+func (p *ServiceAMethodAResult) GetSuccess() (v *Response) {
+	if !p.IsSetSuccess() {
+		return ServiceAMethodAResult_Success_DEFAULT
+	}
+	return p.Success
+}
+func (p *ServiceAMethodAResult) SetSuccess(x interface{}) {
+	p.Success = x.(*Response)
+}
+
+var fieldIDToName_ServiceAMethodAResult = map[int16]string{
+	0: "success",
+}
+
+func (p *ServiceAMethodAResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
 
 func (p *ServiceAMethodAResult) Read(iprot thrift.TProtocol) (err error) {
 
@@ -674,8 +866,22 @@ func (p *ServiceAMethodAResult) Read(iprot thrift.TProtocol) (err error) {
 		if fieldTypeId == thrift.STOP {
 			break
 		}
-		if err = iprot.Skip(fieldTypeId); err != nil {
-			goto SkipFieldTypeError
+
+		switch fieldId {
+		case 0:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField0(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
 		}
 
 		if err = iprot.ReadFieldEnd(); err != nil {
@@ -691,8 +897,10 @@ ReadStructBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
-SkipFieldTypeError:
-	return thrift.PrependError(fmt.Sprintf("%T skip field type %d error", p, fieldTypeId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_ServiceAMethodAResult[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
 ReadFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
@@ -700,11 +908,24 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
+func (p *ServiceAMethodAResult) ReadField0(iprot thrift.TProtocol) error {
+	p.Success = NewResponse()
+	if err := p.Success.Read(iprot); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ServiceAMethodAResult) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
 	if err = oprot.WriteStructBegin("methodA_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
+		if err = p.writeField0(oprot); err != nil {
+			fieldId = 0
+			goto WriteFieldError
+		}
 
 	}
 	if err = oprot.WriteFieldStop(); err != nil {
@@ -716,10 +937,31 @@ func (p *ServiceAMethodAResult) Write(oprot thrift.TProtocol) (err error) {
 	return nil
 WriteStructBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
 WriteFieldStopError:
 	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
 WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *ServiceAMethodAResult) writeField0(oprot thrift.TProtocol) (err error) {
+	if p.IsSetSuccess() {
+		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Success.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 end error: ", p), err)
 }
 
 func (p *ServiceAMethodAResult) String() string {
@@ -733,6 +975,17 @@ func (p *ServiceAMethodAResult) DeepEqual(ano *ServiceAMethodAResult) bool {
 	if p == ano {
 		return true
 	} else if p == nil || ano == nil {
+		return false
+	}
+	if !p.Field0DeepEqual(ano.Success) {
+		return false
+	}
+	return true
+}
+
+func (p *ServiceAMethodAResult) Field0DeepEqual(src *Response) bool {
+
+	if !p.Success.DeepEqual(src) {
 		return false
 	}
 	return true
@@ -911,6 +1164,7 @@ func (p *ServiceAMethodBArgs) Field1DeepEqual(src *Request) bool {
 }
 
 type ServiceAMethodBResult struct {
+	Success *Response `thrift:"success,0,optional" frugal:"0,optional,Response" json:"success,omitempty"`
 }
 
 func NewServiceAMethodBResult() *ServiceAMethodBResult {
@@ -921,7 +1175,25 @@ func (p *ServiceAMethodBResult) InitDefault() {
 	*p = ServiceAMethodBResult{}
 }
 
-var fieldIDToName_ServiceAMethodBResult = map[int16]string{}
+var ServiceAMethodBResult_Success_DEFAULT *Response
+
+func (p *ServiceAMethodBResult) GetSuccess() (v *Response) {
+	if !p.IsSetSuccess() {
+		return ServiceAMethodBResult_Success_DEFAULT
+	}
+	return p.Success
+}
+func (p *ServiceAMethodBResult) SetSuccess(x interface{}) {
+	p.Success = x.(*Response)
+}
+
+var fieldIDToName_ServiceAMethodBResult = map[int16]string{
+	0: "success",
+}
+
+func (p *ServiceAMethodBResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
 
 func (p *ServiceAMethodBResult) Read(iprot thrift.TProtocol) (err error) {
 
@@ -940,8 +1212,22 @@ func (p *ServiceAMethodBResult) Read(iprot thrift.TProtocol) (err error) {
 		if fieldTypeId == thrift.STOP {
 			break
 		}
-		if err = iprot.Skip(fieldTypeId); err != nil {
-			goto SkipFieldTypeError
+
+		switch fieldId {
+		case 0:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField0(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
 		}
 
 		if err = iprot.ReadFieldEnd(); err != nil {
@@ -957,8 +1243,10 @@ ReadStructBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
-SkipFieldTypeError:
-	return thrift.PrependError(fmt.Sprintf("%T skip field type %d error", p, fieldTypeId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_ServiceAMethodBResult[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
 ReadFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
@@ -966,11 +1254,24 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
+func (p *ServiceAMethodBResult) ReadField0(iprot thrift.TProtocol) error {
+	p.Success = NewResponse()
+	if err := p.Success.Read(iprot); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ServiceAMethodBResult) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
 	if err = oprot.WriteStructBegin("methodB_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
+		if err = p.writeField0(oprot); err != nil {
+			fieldId = 0
+			goto WriteFieldError
+		}
 
 	}
 	if err = oprot.WriteFieldStop(); err != nil {
@@ -982,10 +1283,31 @@ func (p *ServiceAMethodBResult) Write(oprot thrift.TProtocol) (err error) {
 	return nil
 WriteStructBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
 WriteFieldStopError:
 	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
 WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *ServiceAMethodBResult) writeField0(oprot thrift.TProtocol) (err error) {
+	if p.IsSetSuccess() {
+		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Success.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 end error: ", p), err)
 }
 
 func (p *ServiceAMethodBResult) String() string {
@@ -999,6 +1321,17 @@ func (p *ServiceAMethodBResult) DeepEqual(ano *ServiceAMethodBResult) bool {
 	if p == ano {
 		return true
 	} else if p == nil || ano == nil {
+		return false
+	}
+	if !p.Field0DeepEqual(ano.Success) {
+		return false
+	}
+	return true
+}
+
+func (p *ServiceAMethodBResult) Field0DeepEqual(src *Response) bool {
+
+	if !p.Success.DeepEqual(src) {
 		return false
 	}
 	return true
@@ -1177,6 +1510,7 @@ func (p *ServiceAMethodCArgs) Field1DeepEqual(src *Request) bool {
 }
 
 type ServiceAMethodCResult struct {
+	Success *Response `thrift:"success,0,optional" frugal:"0,optional,Response" json:"success,omitempty"`
 }
 
 func NewServiceAMethodCResult() *ServiceAMethodCResult {
@@ -1187,7 +1521,25 @@ func (p *ServiceAMethodCResult) InitDefault() {
 	*p = ServiceAMethodCResult{}
 }
 
-var fieldIDToName_ServiceAMethodCResult = map[int16]string{}
+var ServiceAMethodCResult_Success_DEFAULT *Response
+
+func (p *ServiceAMethodCResult) GetSuccess() (v *Response) {
+	if !p.IsSetSuccess() {
+		return ServiceAMethodCResult_Success_DEFAULT
+	}
+	return p.Success
+}
+func (p *ServiceAMethodCResult) SetSuccess(x interface{}) {
+	p.Success = x.(*Response)
+}
+
+var fieldIDToName_ServiceAMethodCResult = map[int16]string{
+	0: "success",
+}
+
+func (p *ServiceAMethodCResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
 
 func (p *ServiceAMethodCResult) Read(iprot thrift.TProtocol) (err error) {
 
@@ -1206,8 +1558,22 @@ func (p *ServiceAMethodCResult) Read(iprot thrift.TProtocol) (err error) {
 		if fieldTypeId == thrift.STOP {
 			break
 		}
-		if err = iprot.Skip(fieldTypeId); err != nil {
-			goto SkipFieldTypeError
+
+		switch fieldId {
+		case 0:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField0(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
 		}
 
 		if err = iprot.ReadFieldEnd(); err != nil {
@@ -1223,8 +1589,10 @@ ReadStructBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
-SkipFieldTypeError:
-	return thrift.PrependError(fmt.Sprintf("%T skip field type %d error", p, fieldTypeId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_ServiceAMethodCResult[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
 ReadFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
@@ -1232,11 +1600,24 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
+func (p *ServiceAMethodCResult) ReadField0(iprot thrift.TProtocol) error {
+	p.Success = NewResponse()
+	if err := p.Success.Read(iprot); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ServiceAMethodCResult) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
 	if err = oprot.WriteStructBegin("methodC_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
+		if err = p.writeField0(oprot); err != nil {
+			fieldId = 0
+			goto WriteFieldError
+		}
 
 	}
 	if err = oprot.WriteFieldStop(); err != nil {
@@ -1248,10 +1629,31 @@ func (p *ServiceAMethodCResult) Write(oprot thrift.TProtocol) (err error) {
 	return nil
 WriteStructBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
 WriteFieldStopError:
 	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
 WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *ServiceAMethodCResult) writeField0(oprot thrift.TProtocol) (err error) {
+	if p.IsSetSuccess() {
+		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Success.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 end error: ", p), err)
 }
 
 func (p *ServiceAMethodCResult) String() string {
@@ -1265,6 +1667,17 @@ func (p *ServiceAMethodCResult) DeepEqual(ano *ServiceAMethodCResult) bool {
 	if p == ano {
 		return true
 	} else if p == nil || ano == nil {
+		return false
+	}
+	if !p.Field0DeepEqual(ano.Success) {
+		return false
+	}
+	return true
+}
+
+func (p *ServiceAMethodCResult) Field0DeepEqual(src *Response) bool {
+
+	if !p.Success.DeepEqual(src) {
 		return false
 	}
 	return true
