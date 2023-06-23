@@ -10,9 +10,25 @@ import (
 	"github.com/cloudwego/kitex/server"
 )
 
-func main() {
+func serverA(addr *net.TCPAddr) server.Server {
+	svr := api.NewServer(
+		new(ServiceAImpl),
+		server.WithServiceAddr(addr),
+	)
+	return svr
+}
 
-	err1 := registerOnNacos("ServiceA", 8080)
+func serverB(addr *net.TCPAddr) server.Server {
+	svr := api.NewServer(
+		new(ServiceBImpl),
+		server.WithServiceAddr(addr),
+	)
+	return svr
+}
+
+func startServer(serviceName string, port int, f func(*net.TCPAddr) server.Server) {
+
+	err1 := registerOnNacos(serviceName, port)
 
 	if err1 != nil {
 		log.Fatal("Failed to register server on Nacos:", err1)
@@ -27,12 +43,9 @@ func main() {
 		go func(instanceID int) {
 			defer group.Done()
 
-			addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:808%d", instanceID))
+			addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%d", int(port+instanceID)))
 
-			svr := api.NewServer(
-				new(ServiceAImpl),
-				server.WithServiceAddr(addr),
-			)
+			svr := f(addr)
 
 			err1 := svr.Run()
 
@@ -44,4 +57,12 @@ func main() {
 
 	group.Wait()
 
+}
+
+func main() {
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go startServer("ServiceA", 8080, serverA)
+	go startServer("ServiceB", 8084, serverB)
+	wg.Wait()
 }

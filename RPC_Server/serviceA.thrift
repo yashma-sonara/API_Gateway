@@ -14,3 +14,9 @@ service serviceA {
     Response methodB(1: Request req),
     Response methodC(1: Request req)
 }
+
+service serviceB {
+    Response methodA(1: Request req),
+    Response methodB(1: Request req),
+    Response methodC(1: Request req)
+}
