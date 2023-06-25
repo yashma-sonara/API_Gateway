@@ -27,16 +27,6 @@ import (
 	"github.com/kitex-contrib/registry-nacos/resolver"
 )
 
-// type GenericServiceImpl struct {
-// }
-
-//	func (g *GenericServiceImpl) GenericCall(ctx context.Context, method string, request interface{}) (response interface{}, err error) {
-//		// use jsoniter or other JSON parsing library to assert request
-//		m := request.(string)
-//		fmt.Printf("Recv: %v\n", m)
-//		return "{\"Msg\": \"world\"}", nil
-//	}
-
 // validateContentType checks if the content type of ctx is valid.
 // It returns true if the content type is invalid, otherwise false.
 func validateContentType(ctx *app.RequestContext) bool {
@@ -147,15 +137,6 @@ func decode(c context.Context, ctx *app.RequestContext) {
 		return
 	}
 
-	// if len(body) == 0 {
-	// 	log.Println("Empty request body")
-	// 	ctx.SetStatusCode(http.StatusBadRequest)
-	// 	ctx.WriteString("Empty request body")
-	// 	return
-	// }
-
-	// fmt.Println(string(body))
-
 	_, err = parseRequestBody(body)
 	if err != nil {
 		log.Println("Error parsing JSON:", err)
@@ -164,10 +145,6 @@ func decode(c context.Context, ctx *app.RequestContext) {
 		return
 	}
 
-	// httpMethod := ctx.Request.Method()
-	// fmt.Println("Service name:", serviceName, ", Method:", method, "/", string(httpMethod))
-	// fmt.Println(jsonMap)
-
 	re, err := createNacosRegistry()
 	if err != nil {
 		log.Println("Error creating new Nacos Resolver:", err)
@@ -175,9 +152,6 @@ func decode(c context.Context, ctx *app.RequestContext) {
 		ctx.String(consts.StatusInternalServerError, "Error creating new Nacos Resolver")
 		return
 	}
-
-	// endPointInfo := rpcinfo.NewEndpointInfo(serviceName, method, nil, nil)
-	// t := re.Target(c, endPointInfo)
 
 	result, err := resolveService(c, re, serviceName)
 	if err != nil {
@@ -188,11 +162,6 @@ func decode(c context.Context, ctx *app.RequestContext) {
 	}
 
 	checkInstances(result)
-
-	// re, err5 := resolver.NewDefaultNacosResolver()
-	// if err5 != nil {
-	// 	log.Println("Error creating new Nacos Resolver:", err5.Error())
-	// }
 
 	g, err := translateThrift(ctx)
 	if err != nil {
@@ -209,20 +178,6 @@ func decode(c context.Context, ctx *app.RequestContext) {
 		ctx.String(consts.StatusInternalServerError, "Error creating generic client")
 		return
 	}
-
-	// Create the server
-	// svr := genericserver.NewServer(new(GenericServiceImpl), g)
-	// // Start the server
-	// go func() {
-	// 	err := svr.Run()
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// }()
-
-	// Wait for the server to start
-	// time.Sleep(time.Second)
-	// fmt.Println(string(body))
 
 	resp, err := makeGenericCall(c, cli, method, string(body))
 	if err != nil {
