@@ -188,7 +188,9 @@ func decode(c context.Context, ctx *app.RequestContext) {
 	}
 
 	fmt.Println("Response:", resp)
-	ctx.JSON(consts.StatusOK, resp)
+	var response map[string]interface{}
+	json.Unmarshal([]byte(resp.(string)), &response)
+	ctx.JSON(consts.StatusOK, response)
 }
 
 // main acts as the entry point of the server application. It sets up a server
