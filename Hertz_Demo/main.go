@@ -29,7 +29,7 @@ import (
 
 // validateContentType checks if the content type of ctx is valid.
 // It returns true if the content type is invalid, otherwise false.
-func validateContentType(ctx *app.RequestContext) bool {
+func invalidContentType(ctx *app.RequestContext) bool {
 	return string(ctx.ContentType()) != "application/json"
 }
 
@@ -111,7 +111,7 @@ func makeGenericCall(c context.Context, cli genericclient.Client, method string,
 // It validates the context ctx, parses the request body, discover the service,
 // and makes a generic call with load balancer. Finally, it returns the response in JSON, or an error if any operation fails.
 func decode(c context.Context, ctx *app.RequestContext) {
-	if validateContentType(ctx) {
+	if invalidContentType(ctx) {
 		log.Println("Invalid Content-Type:", string(ctx.ContentType()))
 		ctx.SetStatusCode(http.StatusBadRequest)
 		ctx.String(consts.StatusBadRequest, "Invalid Content-Type, expected application/json")
