@@ -9,9 +9,7 @@ This project is an API Gateway implementation that serves as a centralized entry
 
 ## To start Hertz Server
   ### Navigate into Hertz_Demo folder and run following commands: 
-* `go mod init Hertz_Demo`
-*  `go mod tidy`
-* `go build -o Hertz_Demo`
+
 * `go run main.go`
 
 ## To start nacos server: 
@@ -33,9 +31,9 @@ This project is an API Gateway implementation that serves as a centralized entry
   ### Navigate to RPC_Server directory
   ### Run following command: 
   * Windows: 
-   	*  `sh output/bootstrap.sh`
-  * Linux: 
-     * `bash output/bootstrap.sh`
+   	*  `bash output/bootstrap.sh`
+  * Linux/Git Bash: 
+     * `sh output/bootstrap.sh`
    
 
   You can view nacos registered services on: http://localhost:8848/nacos
