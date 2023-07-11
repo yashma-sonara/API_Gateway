@@ -9,11 +9,13 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -26,6 +28,13 @@ import (
 	"github.com/cloudwego/kitex/pkg/loadbalance"
 	"github.com/kitex-contrib/registry-nacos/resolver"
 )
+
+var lb loadbalance.Loadbalancer
+var reg discovery.Resolver
+var idlFile []string = []string{"C:/Users/user/Documents/Orbital2223/APIGatewayEdit/RPC_Server/serviceA.thrift"}
+var idlContent = make(map[string]string)
+var serviceIdlMap = make(map[string]string)
+var serviceClientMap = make(map[string]genericclient.Client)
 
 // validateContentType checks if the content type of ctx is valid.
 // It returns true if the content type is invalid, otherwise false.
@@ -85,19 +94,149 @@ func checkInstances(result discovery.Result) {
 	}
 }
 
-// translateThrift translates the JSON body in ctx to Thrift.
-// The provided IDL file is at path ../RPC_Server/serviceA.thrift
-// It returns the translated Generic object and an error if file parse or translation fails.
-func translateThrift(ctx *app.RequestContext) (generic.Generic, error) {
-	p, err := generic.NewThriftFileProvider("../RPC_Server/serviceA.thrift")
+// initIdl initialises the generic call features of the API Gateway based on each file in slice idlFile.
+// It returns an error if any process in between fails.
+func initIdl() error {
+	for _, file := range idlFile {
+		err := readIdl(file)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// readIdl open and read file, map the content to the file path,
+// read file line by line to get the services it defines and map the file to services,
+// prepare necessary variables for generic call, then map the generic clients to services.
+// It returns an error if any process in between fails.
+func readIdl(file string) error {
+	readFile, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+
+	err = mapContent(file)
+	if err != nil {
+		return err
+	}
+
+	fileScanner := bufio.NewScanner(readFile)
+
+	fileScanner.Split(bufio.ScanLines)
+
+	services := getServices(fileScanner)
+
+	var gen generic.Generic
+
+	if len(services) > 0 {
+		gen, err = genericUtil(file)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, service := range services {
+		fmt.Println(service)
+		err = mapping(service, file, gen)
+		if err != nil {
+			return err
+		}
+	}
+	readFile.Close()
+	return nil
+}
+
+// mapContent store the content of the file and its path in map idlContent.
+// It returns an error if file reading fails.
+func mapContent(file string) error {
+	content, err := os.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	idlContent[file] = string(content)
+	return nil
+}
+
+// mapping habdles the mapping of services and idl and generic client
+// It returns an error if fail to create generic client
+func mapping(service, file string, gen generic.Generic) error {
+	serviceIdlMap[service] = file
+	cli, err := genericClient(service, gen)
+	if err != nil {
+		return err
+	}
+	serviceClientMap[service] = cli
+	return nil
+}
+
+// getServices read each line in a file to identify the services being defined in the idl.
+// The returned string slice consists of all the service names.
+func getServices(fileScanner *bufio.Scanner) []string {
+	var services []string
+	var line string
+	for fileScanner.Scan() {
+		line = fileScanner.Text()
+		if !strings.HasPrefix(line, "service") {
+			continue
+		}
+		sa := strings.SplitN(line, "service ", 2)
+		if len(sa) == 1 {
+			continue
+		}
+		sa = strings.SplitN(sa[1], " {", 2)
+		if len(sa) == 1 {
+			continue
+		}
+		services = append(services, sa[0])
+	}
+	return services
+}
+
+// genericProvider creates a new thrift content provider which
+// maintains a map between idl paths and contents.
+// It returns the pointer to the provider and an error if fails.
+func genericProvider(file string) (*generic.ThriftContentWithAbsIncludePathProvider, error) {
+	p, err := generic.NewThriftContentWithAbsIncludePathProvider(file, idlContent)
 	if err != nil {
 		return nil, err
 	}
-	g, err := generic.JSONThriftGeneric(p)
+
+	return p, nil
+}
+
+// translateThrift creates a new JSON to Thrift Generic.
+// It returns the translated Generic object and an error if translation fails.
+func translateThrift(provider *generic.ThriftContentWithAbsIncludePathProvider) (generic.Generic, error) {
+	g, err := generic.JSONThriftGeneric(provider)
 	if err != nil {
 		return nil, err
 	}
 	return g, nil
+}
+
+// genericUtil creates descriptor provider and generic.Generic for the specified idl file.
+// It returns generic.Generic and error if anything fails.
+func genericUtil(file string) (generic.Generic, error) {
+	p, err := genericProvider(file)
+	if err != nil {
+		return nil, err
+	}
+	gen, err := translateThrift(p)
+	if err != nil {
+		return nil, err
+	}
+	return gen, nil
+}
+
+// genericClient creates the genericClient for serviceName using the given generic ge.
+// It returns the created generic client and an error if fails.
+func genericClient(serviceName string, ge generic.Generic) (genericclient.Client, error) {
+	cli, err := genericclient.NewClient(serviceName, ge, client.WithResolver(reg), client.WithLoadBalancer(lb))
+	if err != nil {
+		return nil, err
+	}
+	return cli, nil
 }
 
 // makeGenericCall performs generic call on c and body,
@@ -105,6 +244,42 @@ func translateThrift(ctx *app.RequestContext) (generic.Generic, error) {
 // It returns the response from the call and an error if the call fails.
 func makeGenericCall(c context.Context, cli genericclient.Client, method string, body string) (interface{}, error) {
 	return cli.GenericCall(c, method, body)
+}
+
+// updateIdl will update the idl mapping of serviceName to the given file.
+// It returns an error if fails.
+func updateIDL(serviceName, file string) error {
+	err := mapContent(file)
+	if err != nil {
+		return err
+	}
+
+	gen, err := genericUtil(file)
+	if err != nil {
+		return err
+	}
+
+	mapping(serviceName, file, gen)
+	return nil
+}
+
+// initialise initialises the global variables before starting the server.
+// It returns any error when calling other functions create new instances.
+func initialise() error {
+	var err error
+
+	lb = loadbalance.NewWeightedRandomBalancer()
+	reg, err = createNacosRegistry()
+	if err != nil {
+		return err
+	}
+
+	err = initIdl()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // decode handles the incoming request and performs the necessary operations.
@@ -137,7 +312,7 @@ func decode(c context.Context, ctx *app.RequestContext) {
 		return
 	}
 
-	_, err = parseRequestBody(body)
+	reqBody, err := parseRequestBody(body)
 	if err != nil {
 		log.Println("Error parsing JSON:", err)
 		ctx.SetStatusCode(http.StatusBadRequest)
@@ -145,15 +320,28 @@ func decode(c context.Context, ctx *app.RequestContext) {
 		return
 	}
 
-	re, err := createNacosRegistry()
+	file, ok := reqBody["file"]
+
+	if ok {
+		fmt.Println("update idl")
+		err = updateIDL(serviceName, file.(string))
+	}
+
 	if err != nil {
-		log.Println("Error creating new Nacos Resolver:", err)
+		log.Println("Error updating IDL", err)
 		ctx.SetStatusCode(http.StatusInternalServerError)
-		ctx.String(consts.StatusInternalServerError, "Error creating new Nacos Resolver")
+		ctx.String(consts.StatusInternalServerError, "Internal server error, fail to update IDL")
 		return
 	}
 
-	result, err := resolveService(c, re, serviceName)
+	if ok {
+		log.Println("Updated idl of ", serviceName, " to ", file)
+		ctx.SetStatusCode(http.StatusAccepted)
+		ctx.String(consts.StatusAccepted, "Updated IDL")
+		return
+	}
+
+	result, err := resolveService(c, reg, serviceName)
 	if err != nil {
 		log.Println("Error resolving service:", err)
 		ctx.SetStatusCode(http.StatusInternalServerError)
@@ -163,23 +351,7 @@ func decode(c context.Context, ctx *app.RequestContext) {
 
 	checkInstances(result)
 
-	g, err := translateThrift(ctx)
-	if err != nil {
-		log.Println("Error translating Thrift:", err)
-		ctx.SetStatusCode(http.StatusInternalServerError)
-		ctx.String(consts.StatusInternalServerError, "Error translating Thrift")
-		return
-	}
-
-	cli, err := genericclient.NewClient(serviceName, g, client.WithResolver(re), client.WithLoadBalancer(loadbalance.NewWeightedRandomBalancer()))
-	if err != nil {
-		log.Println("Error creating generic client:", err)
-		ctx.SetStatusCode(http.StatusInternalServerError)
-		ctx.String(consts.StatusInternalServerError, "Error creating generic client")
-		return
-	}
-
-	resp, err := makeGenericCall(c, cli, method, string(body))
+	resp, err := makeGenericCall(c, serviceClientMap[serviceName], method, string(body))
 	if err != nil {
 		log.Println("Error making generic call:", err)
 		ctx.SetStatusCode(http.StatusInternalServerError)
@@ -201,6 +373,11 @@ func main() {
 	hz := server.Default(
 		server.WithHostPorts("127.0.0.1:8888"),
 	)
+
+	err := initialise()
+	if err != nil {
+		panic(err.Error())
+	}
 
 	hz.Any("/", decode)
 	hz.NoRoute(decode)
