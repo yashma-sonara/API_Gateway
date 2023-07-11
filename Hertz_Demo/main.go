@@ -27,6 +27,12 @@ import (
 	"github.com/kitex-contrib/registry-nacos/resolver"
 )
 
+var (
+	ge  generic.Generic
+	lb  loadbalance.Loadbalancer
+	reg discovery.Resolver
+)
+
 // validateContentType checks if the content type of ctx is valid.
 // It returns true if the content type is invalid, otherwise false.
 func invalidContentType(ctx *app.RequestContext) bool {
@@ -85,10 +91,10 @@ func checkInstances(result discovery.Result) {
 	}
 }
 
-// translateThrift translates the JSON body in ctx to Thrift.
+// translateThrift creates a new JSON to Thrift Generic.
 // The provided IDL file is at path ../RPC_Server/serviceA.thrift
 // It returns the translated Generic object and an error if file parse or translation fails.
-func translateThrift(ctx *app.RequestContext) (generic.Generic, error) {
+func translateThrift() (generic.Generic, error) {
 	p, err := generic.NewThriftFileProvider("../RPC_Server/serviceA.thrift")
 	if err != nil {
 		return nil, err
@@ -105,6 +111,22 @@ func translateThrift(ctx *app.RequestContext) (generic.Generic, error) {
 // It returns the response from the call and an error if the call fails.
 func makeGenericCall(c context.Context, cli genericclient.Client, method string, body string) (interface{}, error) {
 	return cli.GenericCall(c, method, body)
+}
+
+// initialise initialises the global variables before starting the server.
+// It returns any error when calling other functions create new instances.
+func initialise() error {
+	var err error
+	ge, err = translateThrift()
+	if err != nil {
+		return err
+	}
+	lb = loadbalance.NewWeightedRandomBalancer()
+	reg, err = createNacosRegistry()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // decode handles the incoming request and performs the necessary operations.
@@ -145,15 +167,7 @@ func decode(c context.Context, ctx *app.RequestContext) {
 		return
 	}
 
-	re, err := createNacosRegistry()
-	if err != nil {
-		log.Println("Error creating new Nacos Resolver:", err)
-		ctx.SetStatusCode(http.StatusInternalServerError)
-		ctx.String(consts.StatusInternalServerError, "Error creating new Nacos Resolver")
-		return
-	}
-
-	result, err := resolveService(c, re, serviceName)
+	result, err := resolveService(c, reg, serviceName)
 	if err != nil {
 		log.Println("Error resolving service:", err)
 		ctx.SetStatusCode(http.StatusInternalServerError)
@@ -163,15 +177,7 @@ func decode(c context.Context, ctx *app.RequestContext) {
 
 	checkInstances(result)
 
-	g, err := translateThrift(ctx)
-	if err != nil {
-		log.Println("Error translating Thrift:", err)
-		ctx.SetStatusCode(http.StatusInternalServerError)
-		ctx.String(consts.StatusInternalServerError, "Error translating Thrift")
-		return
-	}
-
-	cli, err := genericclient.NewClient(serviceName, g, client.WithResolver(re), client.WithLoadBalancer(loadbalance.NewWeightedRandomBalancer()))
+	cli, err := genericclient.NewClient(serviceName, ge, client.WithResolver(reg), client.WithLoadBalancer(lb))
 	if err != nil {
 		log.Println("Error creating generic client:", err)
 		ctx.SetStatusCode(http.StatusInternalServerError)
@@ -198,6 +204,11 @@ func decode(c context.Context, ctx *app.RequestContext) {
 // handler for incoming requests. The server listens on 127.0.0.1:8888
 // and handles requests for any registered routes.
 func main() {
+	err := initialise()
+	if err != nil {
+		panic(err)
+	}
+
 	hz := server.Default(
 		server.WithHostPorts("127.0.0.1:8888"),
 	)
