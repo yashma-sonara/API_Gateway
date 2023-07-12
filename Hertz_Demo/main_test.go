@@ -88,3 +88,78 @@ func TestParseRequestBody_InvalidRequest2(t *testing.T) {
 	expected := map[string]interface{}(nil)
 	assert.Equal(t, expected, mapping)
 }
+
+func TestIntegration1_UpdateCorrectIDL(t *testing.T) {
+	body := `{"userId": "test id", "file": "../RPC_Server/serviceA2.thrift"}`
+	ctx := &app.RequestContext{
+		Request: *protocol.NewRequest(http.MethodGet, "/ServiceA/methodA", nil),
+	}
+	ctx.Request.SetHeader("Content-Type", "application/json")
+	ctx.Request.AppendBodyString(body)
+
+	testC := context.Background()
+	initialise()
+	decode(testC, ctx)
+
+	assert.Equal(t, http.StatusAccepted, ctx.Response.StatusCode())
+
+	expected := "Updated IDL"
+	assert.Equal(t, expected, string(ctx.Response.Body()))
+}
+
+
+func TestIntegration2_UpdateIncorrectIDL(t *testing.T) {
+	body := `{"userId": "test id", "file": "../RPC_Server/serviceA3.thrift"}`
+	ctx := &app.RequestContext{
+		Request: *protocol.NewRequest(http.MethodGet, "/ServiceA/methodA", nil),
+	}
+	ctx.Request.SetHeader("Content-Type", "application/json")
+	ctx.Request.AppendBodyString(body)
+
+	testC := context.Background()
+	initialise()
+	decode(testC, ctx)
+
+	assert.Equal(t, http.StatusInternalServerError, ctx.Response.StatusCode())
+
+	expected := "Internal server error, fail to update IDL"
+	assert.Equal(t, expected, string(ctx.Response.Body()))
+}
+
+
+func TestIntegration3_IncorrectService(t *testing.T) {
+	body := `{"userId": "test id", "message": "test"}`
+
+	ctx := &app.RequestContext{
+		Request: *protocol.NewRequest(http.MethodGet, "/ServiceC/methodA", nil),
+	}
+	ctx.Request.SetHeader("Content-Type", "application/json")
+	ctx.Request.AppendBodyString(body)
+
+	testC := context.Background()
+	initialise()
+	decode(testC, ctx)
+
+	assert.Equal(t, http.StatusInternalServerError, ctx.Response.StatusCode())
+
+	expected := "Error resolving service"
+	assert.Equal(t, expected, string(ctx.Response.Body()))
+}
+
+func TestIntegration4_ValidRequestWithUpdatedIDL(t *testing.T) {
+	body2 := `{"user": "test id", "message": "test"}`
+	ctx2 := &app.RequestContext{
+		Request: *protocol.NewRequest(http.MethodGet, "/ServiceA/methodA", nil),
+	}
+	ctx2.Request.SetHeader("Content-Type", "application/json")
+	ctx2.Request.AppendBodyString(body2)
+
+	testD := context.Background()
+	decode(testD, ctx2)
+
+	assert.Equal(t, http.StatusOK, ctx2.Response.StatusCode())
+
+	expected2 := `{"message":"User Connected to ServiceA, methodA.\nMessage content:test"}`
+	assert.Equal(t, expected2, string(ctx2.Response.Body()))
+}
+
