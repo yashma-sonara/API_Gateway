@@ -1,7 +1,7 @@
 namespace go api
 
 struct Request {
-    1: string userId
+    1: string user
     2: string message
 }
 
