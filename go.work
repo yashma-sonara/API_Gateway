@@ -1,6 +1,6 @@
 go 1.20
 
 use (
-	./Hertz_Demo
+	./API_Gateway_Server
 	./RPC_Server
 )
