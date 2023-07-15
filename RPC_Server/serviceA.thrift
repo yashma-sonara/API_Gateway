@@ -9,13 +9,13 @@ struct Response {
     1: string message
 }
 
-service serviceA {
+service ServiceA {
     Response methodA(1: Request req),
     Response methodB(1: Request req),
     Response methodC(1: Request req)
 }
 
-service serviceB {
+service ServiceB {
     Response methodA(1: Request req),
     Response methodB(1: Request req),
     Response methodC(1: Request req)

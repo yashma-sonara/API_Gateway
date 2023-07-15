@@ -31,7 +31,7 @@ import (
 
 var lb loadbalance.Loadbalancer
 var reg discovery.Resolver
-var idlFile []string = []string{"C:/Users/user/Documents/Orbital2223/APIGatewayEdit/RPC_Server/serviceA.thrift"}
+var idlFile []string = []string{"../RPC_Server/serviceA.thrift"}
 var idlContent = make(map[string]string)
 var serviceIdlMap = make(map[string]string)
 var serviceClientMap = make(map[string]genericclient.Client)
@@ -338,6 +338,14 @@ func decode(c context.Context, ctx *app.RequestContext) {
 		log.Println("Updated idl of ", serviceName, " to ", file)
 		ctx.SetStatusCode(http.StatusAccepted)
 		ctx.String(consts.StatusAccepted, "Updated IDL")
+		return
+	}
+
+	_, ok = serviceClientMap[serviceName]
+	if !ok {
+		log.Println("Invalid service name:", err)
+		ctx.SetStatusCode(http.StatusBadRequest)
+		ctx.String(consts.StatusBadRequest, "Invalid service name, service undefined")
 		return
 	}
 
