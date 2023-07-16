@@ -137,7 +137,6 @@ func readIdl(file string) error {
 	}
 
 	for _, service := range services {
-		fmt.Println(service)
 		err = mapping(service, file, gen)
 		if err != nil {
 			return err
@@ -343,7 +342,7 @@ func decode(c context.Context, ctx *app.RequestContext) {
 
 	_, ok = serviceClientMap[serviceName]
 	if !ok {
-		log.Println("Invalid service name:", err)
+		log.Println("Invalid service name:")
 		ctx.SetStatusCode(http.StatusBadRequest)
 		ctx.String(consts.StatusBadRequest, "Invalid service name, service undefined")
 		return
