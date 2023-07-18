@@ -24,8 +24,8 @@ jobs:
 #     - name: Build
 #       run: go build -v ./...
     
-    - name: Start server
-      run: cd RPC_Server && chmod +x output/bin/serviceA && sh output/bootstrap.sh
+    - name: Start backend servers
+      run: cd RPC_Server && chmod +x output/bin/serviceA && sh build.sh && sh output/bootstrap.sh
 
     - name: Test
       run: go test -v API_Gateway_Server/...
