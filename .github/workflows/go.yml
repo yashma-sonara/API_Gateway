@@ -25,7 +25,7 @@ jobs:
       run: |
         git clone https://github.com/nacos-group/nacos-docker.git
         cd nacos-docker
-        docker-compose -f example/cluster-hostname.yaml up 
+        docker-compose -f example/standalone-derby.yaml up
 
 #     - name: Build
 #       run: go build -v ./...
