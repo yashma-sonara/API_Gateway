@@ -63,6 +63,6 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go startServer("ServiceA", 8080, serverA)
-	go startServer("ServiceB", 8084, serverB)
+	go startServer("ServiceB", 8085, serverB)
 	wg.Wait()
 }
