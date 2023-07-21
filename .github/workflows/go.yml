@@ -20,12 +20,26 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.20'
+        
+    - name: Start Nacos
+      run: |
+        docker run --name nacos-quick -e MODE=standalone -p 8848:8848 -p 9848:9848 -d nacos/nacos-server:v2.2.0
 
 #     - name: Build
 #       run: go build -v ./...
     
     - name: Start backend servers
-      run: cd RPC_Server && chmod +x output/bin/serviceA && sh build.sh && sh output/bootstrap.sh
+      run: |
+        cd RPC_Server
+        chmod +x output/bin/serviceA
+        sh build.sh
+        sh output/bootstrap.sh &
+
 
     - name: Test
       run: go test -v API_Gateway_Server/...
+      
+    - name: Stop Nacos
+      run: |
+        docker stop nacos-quick
+
