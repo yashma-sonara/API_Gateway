@@ -139,9 +139,9 @@ func TestIntegration3_IncorrectService(t *testing.T) {
 	initialise()
 	decode(testC, ctx)
 
-	assert.Equal(t, http.StatusInternalServerError, ctx.Response.StatusCode())
+	assert.Equal(t, http.BadRequest, ctx.Response.StatusCode())
 
-	expected := "Error resolving service"
+	expected := "Invalid service name, service undefined"
 	assert.Equal(t, expected, string(ctx.Response.Body()))
 }
 
