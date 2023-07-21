@@ -29,7 +29,11 @@ jobs:
 #       run: go build -v ./...
     
     - name: Start backend servers
-      run: cd RPC_Server && chmod +x output/bin/serviceA && sh build.sh && sh output/bootstrap.sh
+      run: cd RPC_Server
+            output/bin/serviceA.exe
+            build.bat
+            output/bootstrap.bat
+
 
     - name: Test
       run: go test -v API_Gateway_Server/...
