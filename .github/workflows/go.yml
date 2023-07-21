@@ -41,5 +41,5 @@ jobs:
       
     - name: Stop Nacos
       run: |
-        cd nacos-docker
-        docker-compose -f example/standalone-derby.yaml down
+        docker stop nacos-quick
+
