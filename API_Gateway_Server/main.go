@@ -11,7 +11,8 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
+
+	// "encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -26,6 +27,7 @@ import (
 	"github.com/cloudwego/kitex/pkg/discovery"
 	"github.com/cloudwego/kitex/pkg/generic"
 	"github.com/cloudwego/kitex/pkg/loadbalance"
+	"github.com/cloudwego/kitex/pkg/utils"
 	"github.com/kitex-contrib/registry-nacos/resolver"
 )
 
@@ -53,9 +55,10 @@ func readPath(ctx *app.RequestContext) []string {
 
 // parseRequestBody parses the request body into a JSON map using Unmarshal.
 // It returns the parsed JSON map and an error if parsing fails.
-func parseRequestBody(body []byte) (map[string]interface{}, error) {
-	var jsonMap map[string]interface{}
-	err := json.Unmarshal(body, &jsonMap)
+func parseRequestBody(body []byte) (map[string]string, error) {
+	// var jsonMap map[string]interface{}
+	jsonMap, err := utils.JSONStr2Map(string(body))
+	// err := json.Unmarshal(body, &jsonMap)
 	return jsonMap, err
 }
 
@@ -323,7 +326,7 @@ func decode(c context.Context, ctx *app.RequestContext) {
 
 	if ok {
 		fmt.Println("update idl")
-		err = updateIDL(serviceName, file.(string))
+		err = updateIDL(serviceName, file)
 	}
 
 	if err != nil {
@@ -367,8 +370,14 @@ func decode(c context.Context, ctx *app.RequestContext) {
 	}
 
 	fmt.Println("Response:", resp)
-	var response map[string]interface{}
-	json.Unmarshal([]byte(resp.(string)), &response)
+	var response map[string]string
+	response, err = utils.JSONStr2Map(resp.(string))
+	if err != nil {
+		log.Println("Fail to transform response:", err)
+		ctx.SetStatusCode(http.StatusInternalServerError)
+		ctx.String(consts.StatusInternalServerError, "Fail to transform response", resp)
+		return
+	}
 	ctx.JSON(consts.StatusOK, response)
 }
 
