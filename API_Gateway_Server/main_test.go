@@ -64,7 +64,7 @@ func TestParseRequestBody_ValidRequest(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	expected := map[string]interface{}{"key": "value"}
+	expected := map[string]string{"key": "value"}
 	assert.Equal(t, expected, mapping)
 }
 
@@ -76,7 +76,7 @@ func TestParseRequestBody_InvalidRequest1(t *testing.T) {
 
 	assert.Error(t, err)
 
-	expected := map[string]interface{}(nil)
+	expected := map[string]string(nil)
 	assert.Equal(t, expected, mapping)
 }
 
@@ -86,7 +86,7 @@ func TestParseRequestBody_InvalidRequest2(t *testing.T) {
 
 	assert.Error(t, err)
 
-	expected := map[string]interface{}(nil)
+	expected := map[string]string(nil)
 	assert.Equal(t, expected, mapping)
 }
 

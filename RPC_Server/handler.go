@@ -14,6 +14,9 @@ type ServiceBImpl struct{}
 // MethodA implements the ServiceAImpl interface.
 func (s *ServiceAImpl) MethodA(ctx context.Context, req *api.Request) (resp *api.Response, err error) {
 	// TODO: Your code here...
+	if req == nil || req.UserId == "" || req.Message == "" {
+		return nil, fmt.Errorf("missing content in JSON body, require user and message")
+	}
 	msg := fmt.Sprint("User", req.UserId, " Connected to ServiceA, methodA.\nMessage content:", req.Message)
 	return &api.Response{Message: msg}, nil
 }
@@ -21,6 +24,9 @@ func (s *ServiceAImpl) MethodA(ctx context.Context, req *api.Request) (resp *api
 // MethodB implements the ServiceAImpl interface.
 func (s *ServiceAImpl) MethodB(ctx context.Context, req *api.Request) (resp *api.Response, err error) {
 	// TODO: Your code here...
+	if req == nil || req.UserId == "" || req.Message == "" {
+		return nil, fmt.Errorf("missing content in JSON body, require userId and message")
+	}
 	msg := fmt.Sprint("User", req.UserId, " Connected to ServiceA, methodB.\nMessage content:", req.Message)
 	return &api.Response{Message: msg}, nil
 }
@@ -28,6 +34,9 @@ func (s *ServiceAImpl) MethodB(ctx context.Context, req *api.Request) (resp *api
 // MethodC implements the ServiceAImpl interface.
 func (s *ServiceAImpl) MethodC(ctx context.Context, req *api.Request) (resp *api.Response, err error) {
 	// TODO: Your code here...
+	if req == nil || req.UserId == "" || req.Message == "" {
+		return nil, fmt.Errorf("missing content in JSON body, require userId and message")
+	}
 	msg := fmt.Sprint("User", req.UserId, " Connected to ServiceA, methodC.\nMessage content:", req.Message)
 	return &api.Response{Message: msg}, nil
 }
@@ -35,6 +44,9 @@ func (s *ServiceAImpl) MethodC(ctx context.Context, req *api.Request) (resp *api
 // MethodA implements the ServiceBImpl interface.
 func (s *ServiceBImpl) MethodA(ctx context.Context, req *api.Request) (resp *api.Response, err error) {
 	// TODO: Your code here...
+	if req == nil || req.UserId == "" || req.Message == "" {
+		return nil, fmt.Errorf("missing content in JSON body, require userId and message")
+	}
 	msg := fmt.Sprint("User", req.UserId, " Connected to ServiceB, methodA.\nMessage content:", req.Message)
 	return &api.Response{Message: msg}, nil
 }
@@ -42,6 +54,9 @@ func (s *ServiceBImpl) MethodA(ctx context.Context, req *api.Request) (resp *api
 // MethodB implements the ServiceBImpl interface.
 func (s *ServiceBImpl) MethodB(ctx context.Context, req *api.Request) (resp *api.Response, err error) {
 	// TODO: Your code here...
+	if req == nil || req.UserId == "" || req.Message == "" {
+		return nil, fmt.Errorf("missing content in JSON body, require userId and message")
+	}
 	msg := fmt.Sprint("User", req.UserId, " Connected to ServiceB, methodB.\nMessage content:", req.Message)
 	return &api.Response{Message: msg}, nil
 }
@@ -49,6 +64,9 @@ func (s *ServiceBImpl) MethodB(ctx context.Context, req *api.Request) (resp *api
 // MethodC implements the ServiceBImpl interface.
 func (s *ServiceBImpl) MethodC(ctx context.Context, req *api.Request) (resp *api.Response, err error) {
 	// TODO: Your code here...
+	if req == nil || req.UserId == "" || req.Message == "" {
+		return nil, fmt.Errorf("missing content in JSON body, require userId and message")
+	}
 	msg := fmt.Sprint("User", req.UserId, " Connected to ServiceB, methodC.\nMessage content:", req.Message)
 	return &api.Response{Message: msg}, nil
 }
