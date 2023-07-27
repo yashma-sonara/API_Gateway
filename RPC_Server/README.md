@@ -5,6 +5,8 @@ This consists of the backend RPC servers in Kitex and nacos service registration
 ## how to run
 * start nacos server
 
+* `sh build.sh`
+
 * `sh output/bootstrap.sh`
 
 ## how to check if services are registered successfully
