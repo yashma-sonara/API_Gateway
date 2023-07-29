@@ -28,6 +28,7 @@ import (
 	"github.com/cloudwego/kitex/pkg/generic"
 	"github.com/cloudwego/kitex/pkg/loadbalance"
 	"github.com/cloudwego/kitex/pkg/utils"
+	"github.com/hertz-contrib/pprof"
 	"github.com/kitex-contrib/registry-nacos/resolver"
 )
 
@@ -389,6 +390,8 @@ func main() {
 	hz := server.Default(
 		server.WithHostPorts("127.0.0.1:8888"),
 	)
+
+	pprof.Register(hz)
 
 	err := initialise()
 	if err != nil {
