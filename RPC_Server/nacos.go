@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
@@ -34,6 +35,8 @@ func registerOnNacos(serviceName string, port int) error {
 	}
 
 	instanceCount := 3
+	random := rand.Intn(50-1) + 1
+	weight := float64(random)
 
 	instances := make([]vo.RegisterInstanceParam, instanceCount)
 	for i := 0; i < instanceCount; i++ {
@@ -41,7 +44,7 @@ func registerOnNacos(serviceName string, port int) error {
 			Ip:          "127.0.0.1",
 			Port:        uint64(port + i),
 			ServiceName: serviceName,
-			Weight:      10,
+			Weight:      weight,
 			Enable:      true,
 			Healthy:     true,
 			Ephemeral:   true,
