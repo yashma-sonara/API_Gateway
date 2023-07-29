@@ -8,17 +8,23 @@ import (
 	"sync"
 
 	"github.com/cloudwego/kitex/server"
+	prometheus "github.com/kitex-contrib/monitor-prometheus"
 )
 
-func serverA(addr *net.TCPAddr) server.Server {
+func serverA(addr *net.TCPAddr, count int) server.Server {
+	c := 2 + count - 1
+	if c == 4 {
+		c = 5
+	}
 	svr := api.NewServer(
 		new(ServiceAImpl),
 		server.WithServiceAddr(addr),
+		server.WithTracer(prometheus.NewServerTracer(fmt.Sprintf(":909%d", 2+count), fmt.Sprintf("/kitexserverA%d", addr.Port))),
 	)
 	return svr
 }
 
-func serverB(addr *net.TCPAddr) server.Server {
+func serverB(addr *net.TCPAddr, count int) server.Server {
 	svr := api.NewServer(
 		new(ServiceBImpl),
 		server.WithServiceAddr(addr),
@@ -26,7 +32,7 @@ func serverB(addr *net.TCPAddr) server.Server {
 	return svr
 }
 
-func startServer(serviceName string, port int, f func(*net.TCPAddr) server.Server) {
+func startServer(serviceName string, port int, f func(*net.TCPAddr, int) server.Server) {
 
 	err1 := registerOnNacos(serviceName, port)
 
@@ -45,7 +51,7 @@ func startServer(serviceName string, port int, f func(*net.TCPAddr) server.Serve
 
 			addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%d", int(port+instanceID)))
 
-			svr := f(addr)
+			svr := f(addr, instanceID)
 
 			err1 := svr.Run()
 
