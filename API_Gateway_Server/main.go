@@ -11,10 +11,6 @@ package main
 import (
 	"bufio"
 	"context"
-
-	// "encoding/json"
-	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -89,13 +85,13 @@ func resolveService(c context.Context, re discovery.Resolver, serviceName string
 }
 
 // checkInstances prints the number of instances found in result to log.
-func checkInstances(result discovery.Result) {
-	instances := result.Instances
-	log.Println("Number of instances found:", len(instances))
-	for index, instance := range instances {
-		log.Println("Instance", index, "at address", instance.Address())
-	}
-}
+// func checkInstances(result discovery.Result) {
+// 	instances := result.Instances
+// 	log.Println("Number of instances found:", len(instances))
+// 	for index, instance := range instances {
+// 		log.Println("Instance", index, "at address", instance.Address())
+// 	}
+// }
 
 // initIdl initialises the generic call features of the API Gateway based on each file in slice idlFile.
 // It returns an error if any process in between fails.
@@ -289,7 +285,6 @@ func initialise() error {
 // and makes a generic call with load balancer. Finally, it returns the response in JSON, or an error if any operation fails.
 func decode(c context.Context, ctx *app.RequestContext) {
 	if invalidContentType(ctx) {
-		log.Println("Invalid Content-Type:", string(ctx.ContentType()))
 		ctx.SetStatusCode(http.StatusBadRequest)
 		ctx.String(consts.StatusBadRequest, "Invalid Content-Type, expected application/json")
 		return
@@ -297,7 +292,6 @@ func decode(c context.Context, ctx *app.RequestContext) {
 
 	splitArr := readPath(ctx)
 	if len(splitArr) < 3 {
-		log.Println("Invalid URL path:", ctx.Request.Path())
 		ctx.SetStatusCode(http.StatusBadRequest)
 		ctx.String(consts.StatusBadRequest, "Invalid URL path")
 		return
@@ -308,7 +302,6 @@ func decode(c context.Context, ctx *app.RequestContext) {
 
 	body, err := ctx.Body()
 	if err != nil {
-		log.Println("Error reading request body:", err)
 		ctx.SetStatusCode(http.StatusInternalServerError)
 		ctx.String(consts.StatusInternalServerError, "Internal Server Error")
 		return
@@ -316,7 +309,6 @@ func decode(c context.Context, ctx *app.RequestContext) {
 
 	reqBody, err := parseRequestBody(body)
 	if err != nil {
-		log.Println("Error parsing JSON:", err)
 		ctx.SetStatusCode(http.StatusBadRequest)
 		ctx.String(consts.StatusBadRequest, "Invalid JSON data")
 		return
@@ -325,19 +317,16 @@ func decode(c context.Context, ctx *app.RequestContext) {
 	file, ok := reqBody["file"]
 
 	if ok {
-		fmt.Println("update idl")
 		err = updateIDL(serviceName, file)
 	}
 
 	if err != nil {
-		log.Println("Error updating IDL", err)
 		ctx.SetStatusCode(http.StatusInternalServerError)
 		ctx.String(consts.StatusInternalServerError, "Internal server error, fail to update IDL")
 		return
 	}
 
 	if ok {
-		log.Println("Updated idl of ", serviceName, " to ", file)
 		ctx.SetStatusCode(http.StatusAccepted)
 		ctx.String(consts.StatusAccepted, "Updated IDL")
 		return
@@ -345,35 +334,28 @@ func decode(c context.Context, ctx *app.RequestContext) {
 
 	_, ok = serviceClientMap[serviceName]
 	if !ok {
-		log.Println("Invalid service name:")
 		ctx.SetStatusCode(http.StatusBadRequest)
 		ctx.String(consts.StatusBadRequest, "Invalid service name, service undefined")
 		return
 	}
 
-	result, err := resolveService(c, reg, serviceName)
+	_, err = resolveService(c, reg, serviceName)
 	if err != nil {
-		log.Println("Error resolving service:", err)
 		ctx.SetStatusCode(http.StatusInternalServerError)
 		ctx.String(consts.StatusInternalServerError, "Error resolving service")
 		return
 	}
 
-	checkInstances(result)
-
 	resp, err := makeGenericCall(c, serviceClientMap[serviceName], method, string(body))
 	if err != nil {
-		log.Println("Error making generic call:", err)
 		ctx.SetStatusCode(http.StatusInternalServerError)
 		ctx.String(consts.StatusInternalServerError, "Error making generic call")
 		return
 	}
 
-	fmt.Println("Response:", resp)
 	var response map[string]string
 	response, err = utils.JSONStr2Map(resp.(string))
 	if err != nil {
-		log.Println("Fail to transform response:", err)
 		ctx.SetStatusCode(http.StatusInternalServerError)
 		ctx.String(consts.StatusInternalServerError, "Fail to transform response", resp)
 		return
